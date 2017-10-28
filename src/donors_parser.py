@@ -96,7 +96,7 @@ def validate_date(date_text):
         # raise ValueError("Incorrect data format, should be mmddYYYY"
 
 
-def getMedianFromTheList(list):
+def get_median_from_list(list):
     if (list is None or len(list) == 0):
         return 0
 
@@ -121,7 +121,7 @@ def store_and_calc_median_total_transaction(splitList):
         stored_data = cust_zip_key[key]
         stored_data[0] = stored_data[0] + transaction_amt
         transaction_list = add_element_to_list_in_asc_order(transaction_amt, stored_data[1])
-        return (stored_data[0], getMedianFromTheList(transaction_list), len(transaction_list))
+        return (stored_data[0], get_median_from_list(transaction_list), len(transaction_list))
     else:
         cust_zip_key[key] = [transaction_amt, [transaction_amt]]
         return (transaction_amt, transaction_amt, 1)
@@ -131,7 +131,7 @@ def store_and_calc_median_total_transaction(splitList):
 def cal_median_by_zipcode(splitList):
     cmte_id, zip_code, transaction_amt = splitList
     total_transaction, median, no_of_customers = store_and_calc_median_total_transaction(splitList)
-    print([cmte_id, zip_code, str(median), str(no_of_customers), str(total_transaction)])
+    print([cmte_id, zip_code, median, no_of_customers, total_transaction])
     list_of_cust_median_by_zipcode.append([cmte_id, zip_code, median,no_of_customers, total_transaction])
 
 
@@ -141,7 +141,7 @@ def add_element_to_list_in_asc_order(element, list):
         list = []
     isAdded = False
     for i in range(len(list)):
-        if (list[i] >= list):
+        if (list[i] >= element):
             list.insert(i, element)
             isAdded = True
             break
@@ -157,27 +157,45 @@ def cal_median_by_date(cmte_id, transaction_amt, transaction_dt):
     global receipient_date_Map
     if (key in receipient_date_Map):
         stored_data = receipient_date_Map[key]
-        stored_data[2] = stored_data[2] + transaction_amt
         transaction_list = stored_data[3]
-        receipient_date_Map[key] = [cmte_id, transaction_dt, transaction_amt,
+        receipient_date_Map[key] = [cmte_id, transaction_dt, transaction_amt + stored_data[2],
                                     add_element_to_list_in_asc_order(transaction_amt, transaction_list)]
 
     else:
         receipient_date_Map[key] = [cmte_id, transaction_dt, transaction_amt, [transaction_amt]]
 
 def store_median_by_zipcode():
-        with open("medianvals_by_zip.txt", 'wb') as csv_file:
-            writer = csv.writer(csv_file)
-            for row in list_of_cust_median_by_zipcode:
-                writer.writerow(row)
+    with open("medianvals_by_zip.txt", 'w') as csv_file:
+        writer = csv.writer(csv_file, delimiter='|')
+        for row in list_of_cust_median_by_zipcode:
+            writer.writerow(row)
+    pass
+    '''
+    with open("medianvals_by_zip.txt", 'wb') as csv_file:
+        writer = csv.writer(csv_file)
+        for row in list_of_cust_median_by_zipcode:
+            writer.writerow(row)
+    '''
 
 
 
 def store_median_by_date():
     list_of_cust_median_by_date = []
     for key, value in sorted(receipient_date_Map.items(), key=lambda item: (item[1][0], int(item[1][1]))):
-        print(value)
-        list_of_cust_median_by_date.append(value)
+        cmte_id = value[0]
+        transaction_dt = value[1]
+        total_transaction = value[2]
+        transaction_amt_list = value[3]
+        no_of_cmte_id = len(transaction_amt_list)
+        median = get_median_from_list(transaction_amt_list)
+        list_of_cust_median_by_date.append([cmte_id,transaction_dt, median, no_of_cmte_id, total_transaction])
+
+
+    with open("medianvals_by_date.txt", 'w') as csv_file:
+        writer = csv.writer(csv_file, delimiter='|')
+        for row in list_of_cust_median_by_date:
+            writer.writerow(row)
+
 
 
 read_input_file("itcont.txt")
